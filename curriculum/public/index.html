@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Ders Programı — Asugül</title>
+  <link rel="icon" href="assets/images/c5181e15e976.png" sizes="96x96" type="image/png" />
+<style>
+  :root{
+    --bg:#f4f7fb; --card:#fff; --bd:#e6edf8; --accent:#0b63ff;
+    --radius:12px; --shadow:0 8px 24px rgba(12,40,80,.06);
+    --tag-bg:linear-gradient(180deg,#eef7ff,#e8f3ff); --ink:#0f1724;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter,system-ui,Arial,Segoe UI,Roboto;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;padding:18px}
+  .wrap{max-width:1220px;margin:0 auto;display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
+  main.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+  header.row{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+  h1{margin:0;font-size:18px}
+  .controls{display:flex;gap:12px;align-items:center;margin-left:auto}
+  .controls label{display:flex;flex-direction:column;gap:6px;font-size:13px}
+  .controls input[type="number"], input[type="search"]{padding:10px;border-radius:10px;border:1px solid var(--bd);background:#fff}
+  button.btn{background:var(--accent);color:#fff;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
+  button.ghost{background:#fff;border:1px solid var(--bd);padding:8px 10px;border-radius:10px;cursor:pointer}
+
+  details{margin-bottom:12px;border-radius:10px;padding:10px;background:#f8fbff;border:1px solid var(--bd)}
+  summary{cursor:pointer;font-weight:700}
+  .courseRow{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .chip{padding:8px 12px;border-radius:10px;background:#f0f6ff;border:1px dashed var(--bd);cursor:grab;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+  .topicList{margin:10px 0 0 14px;padding-left:18px}
+  .topicList li{margin:6px 0;padding:8px;border-radius:8px;background:#fff;border:1px solid var(--bd);cursor:grab;list-style:disc;word-break:break-word}
+
+  .tableWrap{overflow:auto}
+  table{width:100%;border-collapse:collapse;border-radius:10px;overflow:hidden;border:1px solid var(--bd);table-layout:fixed}
+  thead th{background:#eaf4ff;padding:8px;text-align:center;font-weight:700}
+  th,td{padding:8px;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);vertical-align:top;min-width:88px}
+  td:last-child, th:last-child{border-right:none}
+  td.dropzone{background:#fff;min-height:88px;position:relative;transition:background .14s;word-break:break-word;overflow:hidden}
+  td.dropzone.over{background:#eef6ff}
+  .cellHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:13px}
+  .cellSummary{color:#334155;font-weight:600}
+
+  .slot{display:flex;flex-wrap:wrap;gap:8px}
+  .tag{display:inline-flex;align-items:center;gap:8px;padding:6px 8px;border-radius:999px;background:var(--tag-bg);border:1px solid #dbeeff;font-weight:700;max-width:100%;min-width:60px;overflow:hidden}
+  .tag b{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;display:inline-block}
+  .tag input.tag-q{width:56px;padding:6px;border-radius:8px;border:1px solid var(--bd);background:#fff;text-align:center}
+  .tag button.x{background:transparent;border:none;color:#7b8794;font-weight:800;cursor:pointer;font-size:16px;padding:4px}
+  .tag[draggable="true"]{cursor:grab}
+  .dragging{opacity:.55}
+
+  .msg{position:fixed;right:18px;bottom:18px;display:flex;flex-direction:column;gap:10px;z-index:9999}
+  .toast{background:#fff;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);box-shadow:var(--shadow)}
+  @media(max-width:980px){ .wrap{grid-template-columns:1fr;gap:12px;padding:6px} .chip{max-width:40vw} td.dropzone{min-height:72px} }
+
+  /* Print/A4 - core rules for single-page export */
+  @page { size: A4 landscape; margin: 0; } /* margin 0 helps fit everything */
+  html,body{width:297mm;margin:0;padding:0;height:auto}
+  .page{width:297mm;box-sizing:border-box;padding:8mm;overflow:hidden}
+  @media print {
+    /* Force single page: remove external padding and margins */
+    html,body{width:297mm;height:210mm;margin:0;padding:0;overflow:hidden}
+    body{background:#fff;padding:0}
+    .wrap, main.card, header.row, .controls { box-shadow:none !important; }
+    /* Ensure no page-breaks inside table/rows */
+    table, thead, tbody, tr, td, th { page-break-inside: avoid; -webkit-column-break-inside: avoid; break-inside: avoid; }
+    /* Smaller paddings for print */
+    table{font-size:11px}
+    th,td{padding:6px}
+    /* Hide interactive controls in print */
+    #courses, #search, #expandAll, #collapseAll, #progQ, #saveBtn, #clearBtn { display:none !important; }
+  }
+
+  /* floating clone for touch */
+  .floating {
+    position: fixed; z-index: 99999; pointer-events: none; transform: translate(-50%,-50%); opacity: .92;
+    box-shadow: 0 8px 24px rgba(12,40,80,.12); background: #fff; border-radius: 10px; padding: 8px 10px; border: 1px solid var(--bd);
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <main class="card" id="left">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">
+        <input id="search" type="search" placeholder="Ders / konu ara…" style="flex:1" />
+        <button id="expandAll" class="ghost">Aç</button>
+        <button id="collapseAll" class="ghost">Kapat</button>
+      </div>
+      <div id="courses">Yükleniyor…</div>
+      <div style="margin-top:12px;font-size:13px;color:#445"><strong>Not:</strong> Sürükle-Atılacak sayı sağ üstten verilir; etiketteki sayı sonradan değiştirilebilir.</div>
+    </main>
+
+    <main class="card" id="right">
+      <header class="row" style="align-items:center">
+        <h1>Program</h1>
+        <div class="controls">
+          <label><small style="display:block;font-size:12px;color:#445">Sürükle-Atılacak için Soru/adet</small><input id="progQ" type="number" min="0" value="0"></label>
+          <button id="saveBtn" class="btn">Kaydet (A4 yatay tek sayfa)</button>
+          <button id="clearBtn" class="ghost">Tümünü Temizle</button>
+        </div>
+      </header>
+
+      <div class="tableWrap">
+        <table id="schedule" aria-label="Haftalık Ders Programı">
+          <thead>
+            <tr><th style="width:92px">Saat</th><th>Pzt</th><th>Salı</th><th>Çar</th><th>Per</th><th>Cuma</th></tr>
+          </thead>
+          <tbody id="scheduleBody"></tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <div class="msg" id="msg"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const DAYS = ["Pzt","Salı","Çar","Per","Cuma"];
+function toast(txt, ttl=2200){ const el=document.createElement('div'); el.className='toast'; el.textContent=txt; $('#msg').appendChild(el); setTimeout(()=>el.remove(), ttl); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+function debounce(fn, wait){ let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=> fn.apply(this, a), wait); }; }
+
+/* build 6 rows */
+const scheduleBody = $('#scheduleBody');
+for(let h=1; h<=6; h++){
+  const tr = document.createElement('tr');
+  const th = document.createElement('td'); th.textContent = h + '. Saat'; th.style.fontWeight='700'; tr.appendChild(th);
+  for(let d=0; d<5; d++){
+    const td = document.createElement('td'); td.className='dropzone'; td.dataset.hour=h; td.dataset.day=DAYS[d];
+    const head = document.createElement('div'); head.className='cellHead';
+    const left = document.createElement('div'); left.className='cellSummary'; left.textContent = `${DAYS[d]} • ${h}. saat`;
+    const right = document.createElement('div'); right.className='cellTotal'; right.textContent = 'Toplam: 0';
+    head.appendChild(left); head.appendChild(right);
+    const slot = document.createElement('div'); slot.className='slot';
+    td.appendChild(head); td.appendChild(slot); tr.appendChild(td);
+  }
+  scheduleBody.appendChild(tr);
+}
+
+/* load courses robust */
+async function loadCourses(){
+  try{
+    const query = `{ courses { id code name topics { num title } } }`;
+    const res = await fetch('/graphql', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ query })
+    });
+    const ct = (res.headers.get('content-type')||'').toLowerCase();
+    let json;
+    if(ct.includes('application/json')) json = await res.json();
+    else {
+      const txt = await res.text();
+      try{ json = JSON.parse(txt); } catch(e){ throw new Error('GraphQL JSON değil/boş'); }
+    }
+    if(!json?.data?.courses) throw new Error('no courses');
+    renderCourses(json.data.courses);
+    toast('Dersler yüklendi');
+  }catch(e){
+    console.warn('GraphQL hata, demo kullanılıyor', e);
+    const demo = [
+      {id:'a1', code:'ANAT', name:'Anatomi', topics:[{num:1,title:'Üst Ekstremite'},{num:2,title:'Alt Ekstremite'}]},
+      {id:'b2', code:'FZYO', name:'Fizyoloji', topics:[{num:1,title:'Sinir Sistemi'},{num:2,title:'Kas Fizyolojisi'}]},
+      {id:'c3', code:'BCHM', name:'Biyokimya', topics:[{num:1,title:'Enzimler'},{num:2,title:'Metabolizma'}]}
+    ];
+    renderCourses(demo);
+    toast('Demo dersler yüklendi', 2200);
+  }
+}
+
+/* render left panel */
+function renderCourses(courses){
+  const container = $('#courses'); container.innerHTML='';
+  courses.forEach(c=>{
+    const details = document.createElement('details'); details.open=true;
+    const summary = document.createElement('summary'); summary.textContent = `${c.name} (${c.code})`; details.appendChild(summary);
+
+    const row = document.createElement('div'); row.className='courseRow';
+    const chip = document.createElement('div'); chip.className='chip'; chip.textContent = c.name;
+    chip.dataset.label = c.name; chip.dataset.code = c.code; chip.dataset.type = 'course'; chip.draggable = true;
+    row.appendChild(chip); details.appendChild(row);
+
+    const ul = document.createElement('ul'); ul.className='topicList';
+    (c.topics||[]).forEach(t=>{
+      const li = document.createElement('li'); li.textContent = t.title;
+      li.dataset.label = `${c.code} - ${t.title}`; li.dataset.code = c.code; li.dataset.type='topic'; li.draggable = true;
+      ul.appendChild(li);
+    });
+    details.appendChild(ul); container.appendChild(details);
+
+    // mouse drag
+    chip.addEventListener('dragstart', e=>{
+      chip.classList.add('dragging');
+      e.dataTransfer.setData('application/json', JSON.stringify({ from:'left', type:'course', label: chip.dataset.label }));
+      window.currentDraggingTag = null;
+    });
+    chip.addEventListener('dragend', ()=>chip.classList.remove('dragging'));
+
+    // touch clone
+    attachTouchCloneBehavior(chip);
+
+    ul.querySelectorAll('li').forEach(li=>{
+      li.addEventListener('dragstart', e=>{
+        li.classList.add('dragging');
+        e.dataTransfer.setData('application/json', JSON.stringify({ from:'left', type:'topic', label: li.dataset.label }));
+        window.currentDraggingTag = null;
+      });
+      li.addEventListener('dragend', ()=>li.classList.remove('dragging'));
+      attachTouchCloneBehavior(li);
+    });
+  });
+
+  $('#search').addEventListener('input', e=>{
+    const q = e.target.value.toLowerCase();
+    $$('#courses details').forEach(d=>{
+      let any=false;
+      d.querySelectorAll('.chip, .topicList li').forEach(el=>{
+        const txt = el.textContent.toLowerCase();
+        const show = txt.includes(q);
+        el.style.display = show ? '' : 'none';
+        if(show) any=true;
+      });
+      d.style.display = any ? '' : 'none';
+    });
+  });
+  $('#expandAll').onclick = ()=> $$('#courses details').forEach(d=> d.open = true);
+  $('#collapseAll').onclick = ()=> $$('#courses details').forEach(d=> d.open = false);
+}
+
+/* touch clone for left panel items (mobile copy) */
+function attachTouchCloneBehavior(el){
+  let touchId = null, floatEl = null;
+  el.addEventListener('touchstart', (ev)=>{
+    const t = ev.changedTouches[0];
+    touchId = t.identifier;
+    floatEl = el.cloneNode(true);
+    floatEl.classList.add('floating');
+    floatEl.style.left = t.clientX + 'px';
+    floatEl.style.top = t.clientY + 'px';
+    document.body.appendChild(floatEl);
+    floatEl.style.width = Math.min(window.innerWidth * 0.7, el.offsetWidth + 30) + 'px';
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (ev)=>{
+    if(!floatEl) return;
+    for(const t of ev.changedTouches){
+      if(t.identifier === touchId){
+        floatEl.style.left = t.clientX + 'px';
+        floatEl.style.top = t.clientY + 'px';
+        ev.preventDefault();
+        return;
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', (ev)=>{
+    if(!floatEl) return;
+    const touch = ev.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = dropTarget && dropTarget.closest('.dropzone');
+    if(dropZone){
+      const payloadLabel = el.dataset.label || el.textContent;
+      const defaultQ = Number($('#progQ').value || 0);
+      const tag = makeTagElement({ label: payloadLabel, q: defaultQ });
+      dropZone.querySelector('.slot').appendChild(tag);
+      debouncedUpdateAndPersist();
+    }
+    floatEl.remove();
+    floatEl = null;
+    touchId = null;
+  }, { passive: true });
+}
+
+/* tag creation */
+window.currentDraggingTag = null;
+function makeTagElement(data){
+  const tag = document.createElement('span'); tag.className='tag';
+  tag.dataset.id = data.id || uid();
+  const b = document.createElement('b'); b.textContent = data.label || '';
+  const input = document.createElement('input'); input.type='number'; input.min='0'; input.className='tag-q'; input.value = Number(data.q || 0);
+  const btn = document.createElement('button'); btn.className='x'; btn.innerHTML='×';
+  btn.addEventListener('click', ()=>{ tag.remove(); debouncedUpdateAndPersist(); });
+  input.addEventListener('change', ()=> debouncedUpdateAndPersist());
+
+  tag.draggable = true;
+  tag.addEventListener('dragstart', e=>{
+    tag.classList.add('dragging');
+    window.currentDraggingTag = tag;
+    e.dataTransfer.setData('text/plain', 'dragging-tag');
+    try{ e.dataTransfer.setDragImage(tag, 8, 8); }catch(_){}
+  });
+  tag.addEventListener('dragend', ()=> { tag.classList.remove('dragging'); setTimeout(()=> window.currentDraggingTag = null, 0); });
+
+  attachTouchMoveToTag(tag);
+
+  tag.appendChild(b); tag.appendChild(input); tag.appendChild(btn);
+  return tag;
+}
+
+/* touch move existing tag */
+function attachTouchMoveToTag(tag){
+  let touchId = null, floatEl = null;
+  tag.addEventListener('touchstart', (ev)=>{
+    const t = ev.changedTouches[0];
+    touchId = t.identifier;
+    const originSlot = tag.parentNode;
+    floatEl = tag.cloneNode(true);
+    floatEl.classList.add('floating');
+    floatEl.style.left = t.clientX + 'px'; floatEl.style.top = t.clientY + 'px';
+    document.body.appendChild(floatEl);
+    tag.style.opacity = '0.18';
+  }, { passive: true });
+
+  document.addEventListener('touchmove', (ev)=>{
+    if(!floatEl) return;
+    for(const t of ev.changedTouches){
+      if(t.identifier === touchId){
+        floatEl.style.left = t.clientX + 'px';
+        floatEl.style.top = t.clientY + 'px';
+        ev.preventDefault();
+        return;
+      }
+    }
+  }, { passive: false });
+
+  document.addEventListener('touchend', (ev)=>{
+    if(!floatEl) return;
+    const touch = ev.changedTouches[0];
+    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+    const dropZone = dropTarget && dropTarget.closest('.dropzone');
+    if(dropZone){
+      dropZone.querySelector('.slot').appendChild(tag);
+      debouncedUpdateAndPersist();
+    }
+    tag.style.opacity = '';
+    floatEl.remove();
+    floatEl = null;
+    touchId = null;
+  }, { passive: true });
+}
+
+/* dropzones mouse */
+function initDropzones(){
+  $$('.dropzone').forEach(cell=>{
+    cell.addEventListener('dragover', e=>{ e.preventDefault(); cell.classList.add('over'); });
+    cell.addEventListener('dragleave', ()=> cell.classList.remove('over'));
+    cell.addEventListener('drop', e=>{
+      e.preventDefault(); cell.classList.remove('over');
+      if(window.currentDraggingTag){
+        const tag = window.currentDraggingTag;
+        const targetSlot = cell.querySelector('.slot');
+        if(tag.parentNode !== targetSlot){
+          targetSlot.appendChild(tag);
+          debouncedUpdateAndPersist();
+        }
+        window.currentDraggingTag = null;
+        return;
+      }
+      try{
+        const payload = JSON.parse(e.dataTransfer.getData('application/json') || '{}');
+        if(payload && payload.from === 'left'){
+          const defaultQ = Number($('#progQ').value || 0);
+          const tag = makeTagElement({ label: payload.label, q: defaultQ });
+          cell.querySelector('.slot').appendChild(tag);
+          debouncedUpdateAndPersist();
+        }
+      }catch(err){ console.warn('drop parse err', err); }
+    });
+  });
+}
+
+/* totals & persistence */
+function updateAllTotals(){
+  $$('#scheduleBody tr').forEach((tr, rowIdx)=>{
+    DAYS.forEach((day, dIdx)=>{
+      const cell = tr.children[dIdx+1];
+      if(!cell) return;
+      const totalEl = cell.querySelector('.cellTotal');
+      const sum = Array.from(cell.querySelectorAll('.slot .tag .tag-q')).reduce((acc, inp)=> acc + (Number(inp.value) || 0), 0);
+      const newText = 'Toplam: ' + sum;
+      if(totalEl.textContent !== newText) totalEl.textContent = newText;
+    });
+  });
+}
+function snapshot(){
+  const grid = {};
+  $$('#scheduleBody tr').forEach((tr, ridx)=>{
+    DAYS.forEach((day, didx)=>{
+      const cell = tr.children[didx+1];
+      const items = Array.from(cell.querySelectorAll('.slot .tag')).map(t=>{
+        return { id: t.dataset.id, label: t.querySelector('b').textContent, q: Number(t.querySelector('.tag-q').value || 0) };
+      });
+      grid[`${day}-${ridx+1}`] = { items };
+    });
+  });
+  return { grid, savedAt: new Date().toISOString() };
+}
+function doPersist(){ try{ localStorage.setItem('program-grid', JSON.stringify(snapshot())); } catch(e){ console.warn('persist err', e); } }
+const debouncedUpdateAndPersist = debounce(()=>{ updateAllTotals(); doPersist(); }, 150);
+
+function restore(){
+  const raw = localStorage.getItem('program-grid'); if(!raw) return;
+  try{
+    const parsed = JSON.parse(raw);
+    const grid = parsed.grid || {};
+    Object.entries(grid).forEach(([key, val])=>{
+      const [day, hour] = key.split('-');
+      const cell = document.querySelector(`td.dropzone[data-day="${day}"][data-hour="${hour}"]`);
+      if(!cell) return;
+      const slot = cell.querySelector('.slot'); slot.innerHTML = '';
+      (val.items||[]).forEach(item=>{
+        const tag = makeTagElement({ id: item.id, label: item.label, q: item.q });
+        slot.appendChild(tag);
+      });
+    });
+    updateAllTotals();
+    toast('Taslak yüklendi');
+  }catch(e){ console.warn('restore failed', e); }
+}
+
+$('#clearBtn').addEventListener('click', ()=>{
+  $$('.dropzone .slot').forEach(s=> s.innerHTML='');
+  debouncedUpdateAndPersist();
+  toast('Tüm hücreler temizlendi');
+});
+
+/* build printable HTML with measured scale; attempt to guarantee single-A4 landscape page */
+function buildPrintableHTML(){
+  // Clone table and replace interactive tags with static text
+  const cloneTable = document.getElementById('schedule').cloneNode(true);
+
+  // Replace .tag elements with simple spans showing label and count
+  cloneTable.querySelectorAll('.tag').forEach(t=>{
+    const label = t.querySelector('b')?.textContent || '';
+    const q = t.querySelector('.tag-q')?.value || '0';
+    const span = document.createElement('span');
+    span.className='tag';
+    span.textContent = `${label}  #${q}`;
+    span.style.display='inline-block';
+    span.style.padding='4px 8px';
+    span.style.margin='4px';
+    span.style.borderRadius='999px';
+    span.style.background='#eef7ff';
+    span.style.border='1px solid #dbeeff';
+    t.parentNode.replaceChild(span, t);
+  });
+
+  // Create wrapper content element that will be measured
+  const contentWrap = document.createElement('div');
+  contentWrap.style.boxSizing='border-box';
+  contentWrap.style.padding = '8mm';
+  contentWrap.style.background = '#fff';
+  contentWrap.style.color = '#0f1724';
+  contentWrap.style.fontFamily = 'Inter, system-ui, Arial, sans-serif';
+  contentWrap.style.fontSize = '12px';
+  contentWrap.innerHTML = '<h1 style="font-size:16px;margin:0 0 8px;text-align:center">Program</h1>';
+  contentWrap.appendChild(cloneTable);
+
+  // Insert hidden measurer that uses exact A4 dimensions (in px at current device DPI)
+  const measurer = document.createElement('div');
+  measurer.style.position='fixed';
+  measurer.style.left='0';
+  measurer.style.top='0';
+  measurer.style.visibility='hidden';
+  // Use mm units so scaling is stable
+  measurer.style.width = '297mm';
+  measurer.style.height = '210mm';
+  measurer.style.boxSizing='border-box';
+  measurer.appendChild(contentWrap);
+  document.body.appendChild(measurer);
+
+  // compute scale: ensure content fits into A4 area including internal padding
+  const paperW = measurer.clientWidth; const paperH = measurer.clientHeight;
+  const contentW = contentWrap.scrollWidth; const contentH = contentWrap.scrollHeight;
+
+  let scale = Math.min(paperW / Math.max(contentW,1), paperH / Math.max(contentH,1));
+  const minScale = 0.45; // agresif küçültme sınırı
+  if(scale < minScale) scale = minScale;
+  if(scale > 1) scale = 1;
+
+  document.body.removeChild(measurer);
+
+  // Build final printable HTML. Note: @page margin is set to 0 in CSS.
+  const css = `
+@page { size: A4 landscape; margin: 0; }
+html,body{width:297mm;height:210mm;margin:0;padding:0}
+body{font-family:Inter,system-ui,Arial;margin:0;background:#fff;color:#0f1724}
+.page{width:297mm;box-sizing:border-box;padding:0;overflow:hidden}
+h1{font-size:16px;margin:0 0 8px;text-align:center}
+table{width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e6edf8;table-layout:fixed}
+th{background:#eaf4ff;padding:6px;text-align:center;font-weight:700;border:1px solid #e6edf8}
+td{padding:6px;border:1px solid #f0f6ff;vertical-align:top;word-break:break-word}
+.tag{display:inline-block;padding:3px 6px;margin:3px;border-radius:999px;background:#eef7ff;border:1px solid #dbeeff;font-weight:700}
+@media print { table{font-size:10px} }
+  `;
+
+  // Inject scale transform inside wrapper so the printed content is fitted.
+  const wrapper = `<div class="page"><div style="transform: scale(${scale}); transform-origin: top left; width: ${100/scale}%; box-sizing: border-box; padding:8mm;">`;
+  const html = `<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Program</title><style>${css}</style></head><body>${wrapper}<h1>Program</h1>${cloneTable.outerHTML}</div></div></body></html>`;
+  return html;
+}
+
+/* saveProgram: send single file field 'files' to server; if server returns PDF blob, download it */
+async function saveProgram(){
+  try{
+    const html = buildPrintableHTML();
+    const file = new File([html], 'program.html', { type:'text/html' });
+    const fd = new FormData();
+    // only one field 'files' as you asked
+    fd.append('files', file, 'program.html');
+
+    const res = await fetch('/program', { method:'POST', body: fd });
+
+    if(!res.ok){
+      const txt = await res.text().catch(()=>null);
+      throw new Error('Sunucu hata: ' + res.status + (txt ? ' - ' + txt.slice(0,200) : ''));
+    }
+
+    const ct = (res.headers.get('content-type')||'').toLowerCase();
+
+    if(ct.includes('application/json')){
+  let json = null;
+  try { json = await res.json(); } catch(e){ console.warn('JSON parse fail', e); }
+
+  if(json && json.success && json.pdfFile){
+    toast('Program PDF hazırlandı');
+    
+    // indir butonunu oluştur
+    const btn = document.createElement('button');
+    btn.textContent = "PDF İndir";
+    btn.className = "btn";
+    btn.style.marginTop = "10px";
+    btn.onclick = () => {
+      const a = document.createElement('a');
+      a.href = json.pdfFile;
+      a.download = json.pdfFile.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    };
+
+    // mesaj kutusuna ekle
+    const msgBox = document.getElementById('msg');
+    msgBox.appendChild(btn);
+
+  } else {
+    toast('Sunucu yanıtı beklenen formatta değil');
+    console.log("saveProgram json:", json);
+  }
+}
+ else {
+      // not JSON -> likely a PDF blob
+      const blob = await res.blob();
+      if(!blob || blob.size === 0){
+        toast('Sunucu boş yanıt döndü.');
+        return;
+      }
+      const filename = (blob.type === 'application/pdf') ? 'program.pdf' : 'program_output';
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 60000);
+      toast('PDF indiriliyor...');
+    }
+  }catch(err){
+    console.error('saveProgram error', err);
+    toast('Kaydetme başarısız: ' + (err.message || err));
+    // extra hint for Chrome header/footer issue
+    if(String(err).toLowerCase().includes('header') || String(err).toLowerCase().includes('footer')){
+      toast('Not: Chrome print dialogunda "Headers and footers" kapatılmalı (elle veya otomasyonla).');
+    }
+  }
+}
+
+/* start */
+document.getElementById('saveBtn').addEventListener('click', saveProgram);
+loadCourses().then(()=>{ initDropzones(); restore(); });
+window.addEventListener('beforeunload', ()=> doPersist());
+window.addEventListener('keydown', e=>{ if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); saveProgram(); } });
+
+</script>
+</body>
+</html>
